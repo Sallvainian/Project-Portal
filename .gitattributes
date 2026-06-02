@@ -1,0 +1,14 @@
+# Normalize line endings to LF on checkin
+* text=auto eol=lf
+
+# Treat these as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Keep lockfiles diff-collapsed in PRs
+package-lock.json linguist-generated=true
