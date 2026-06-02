@@ -1,4 +1,4 @@
-name: Claude Code Review
+name: Claude Code Review (BMAD Adversarial)
 
 on:
   pull_request:
@@ -7,17 +7,9 @@ on:
     # paths:
     #   - "src/**/*.ts"
     #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,14 +23,37 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run Claude Code Review
+      # BMAD's skills live in .claude/skills/ but are gitignored (installed
+      # per-machine), so the runner has no copy. Install them fresh here.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      # `bmad-review-adversarial-general` belongs to the `core` module, which is
+      # auto-added; `bmm` is a small superset and matches the local install.
+      # `@next` tracks the local prerelease channel — swap to a pinned version
+      # (e.g. bmad-method@6.8.1-next.0) if you want byte-reproducible CI runs.
+      - name: Install BMAD (headless)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npx --yes bmad-method@next install --yes --modules bmm --tools claude-code
+
+      - name: Run BMAD adversarial review
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          prompt: |
+            Use the `bmad-review-adversarial-general` skill to perform a cynical,
+            adversarial review of this pull request's changes.
 
+            1. Get the diff with `gh pr diff ${{ github.event.pull_request.number }}`.
+            2. Invoke the skill, passing that diff as its `content` input. Adopt the
+               skill's skeptical reviewer role: assume problems exist, look for what is
+               missing as well as what is wrong, and keep a precise, professional tone
+               (no profanity or personal attacks).
+            3. Post the resulting findings as a single PR review, formatted as the
+               Markdown list the skill produces. Group findings by severity if helpful.
+          claude_args: '--allowed-tools "Bash(gh pr diff:*),Skill,Read,Grep,Glob"'
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md

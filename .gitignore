@@ -38,6 +38,13 @@ pocketbase/CHANGELOG.md
 pocketbase/LICENSE.md
 pocketbase/pb_data/
 
+# BMAD Method — installed per-machine via `npx bmad-method install`, not committed.
+# CI reinstalls these on the runner (see .github/workflows/claude-code-review.yml).
+_bmad/
+_bmad-output/
+.claude/skills/
+.agents/
+
 # Editor / OS
 .DS_Store
 .idea
