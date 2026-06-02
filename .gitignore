@@ -32,6 +32,12 @@ pnpm-debug.log*
 coverage
 .nyc_output
 
+# PocketBase — platform-specific binary + local database/storage are not committed
+pocketbase/pocketbase
+pocketbase/CHANGELOG.md
+pocketbase/LICENSE.md
+pocketbase/pb_data/
+
 # Editor / OS
 .DS_Store
 .idea
