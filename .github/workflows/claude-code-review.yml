@@ -44,16 +44,13 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Start the prompt with the slash command so the skill is invoked
+          # deterministically, not left to the model to decide.
           prompt: |
-            Use the `bmad-review-adversarial-general` skill to perform a cynical,
-            adversarial review of this pull request's changes.
+            /bmad-review-adversarial-general
 
-            1. Get the diff with `gh pr diff ${{ github.event.pull_request.number }}`.
-            2. Invoke the skill, passing that diff as its `content` input. Adopt the
-               skill's skeptical reviewer role: assume problems exist, look for what is
-               missing as well as what is wrong, and keep a precise, professional tone
-               (no profanity or personal attacks).
-            3. Post the resulting findings as a single PR review, formatted as the
-               Markdown list the skill produces. Group findings by severity if helpful.
-          claude_args: '--allowed-tools "Bash(gh pr diff:*),Skill,Read,Grep,Glob"'
+            Content to review: this pull request's diff. If it is not already in
+            context, load it with `gh pr diff ${{ github.event.pull_request.number }}`.
+            Post the skill's findings as a single PR review.
+          claude_args: '--allowed-tools "Bash(gh pr diff:*),Read,Grep,Glob"'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
